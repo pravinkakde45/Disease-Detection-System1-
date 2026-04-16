@@ -1,6 +1,6 @@
 const DiseaseHistory = require('../models/DiseaseHistory');
-const { spawn } = require('child_process');
-const path = require('path');
+const { HfInference } = require('@huggingface/inference');
+const hf = new HfInference(process.env.HF_API_TOKEN);
 
 // @desc    Save disease prediction result
 // @route   POST /api/disease/save-result
@@ -44,60 +44,46 @@ const predictDisease = async (req, res) => {
     }
 
     try {
-        // Path to python script
-        const scriptPath = path.join(__dirname, '../../backend/ml/predict_disease.py');
+        const systemPrompt = `You are an expert medical diagnostician algorithm. 
+The patient has the following symptoms: ${symptoms.join(', ')}.
+Analyze these symptoms and determine the most likely primary disease. Provide a confidence score between 0 and 100 representing how certain you are of this diagnosis based strictly on the symptoms.
+Return ONLY a strictly valid JSON object matching this exact format:
+{
+  "primary_disease": "Name of Disease",
+  "confidence": 85
+}
+Do not include any other text, markdown formatting, or code blocks.`;
 
-        const pythonProcess = spawn('python', [scriptPath]);
-
-        let dataString = '';
-        let errorString = '';
-
-        // Send data to python script
-        pythonProcess.stdin.write(JSON.stringify({ symptoms }));
-        pythonProcess.stdin.end();
-
-        pythonProcess.stdout.on('data', (data) => {
-            dataString += data.toString();
+        const response = await hf.chatCompletion({
+            model: process.env.HF_MODEL_ID || 'google/gemma-3-27b-it',
+            messages: [{ role: 'user', content: systemPrompt }],
+            max_tokens: 200,
+            temperature: 0.2
         });
 
-        pythonProcess.stderr.on('data', (data) => {
-            console.error(`Python Error: ${data}`);
-            errorString += data.toString();
+        const rawText = response.choices[0].message.content.trim();
+        let result;
+        try {
+            // Remove any markdown code blocks if the LLM hallucinated them
+            const cleanedText = rawText.replace(/```json/g, '').replace(/```/g, '').trim();
+            result = JSON.parse(cleanedText);
+        } catch(e) {
+             console.error("Failed to parse HF response:", rawText);
+             return res.status(500).json({ message: "Invalid diagnosis format from AI", details: rawText });
+        }
+
+        const historyEntry = await DiseaseHistory.create({
+            userId: req.user.id,
+            predictedDisease: result.primary_disease || "Unknown Disease",
+            confidenceScore: result.confidence || 0,
+            symptomsProvided: symptoms
         });
-
-        pythonProcess.on('close', async (code) => {
-            if (code !== 0) {
-                console.error('Python script failed', errorString);
-                return res.status(500).json({ message: 'Prediction failed', error: errorString });
-            }
-
-            try {
-                const result = JSON.parse(dataString);
-
-                if (result.error) {
-                    return res.status(500).json({ message: result.error });
-                }
-
-                // Save to Database
-                const historyEntry = await DiseaseHistory.create({
-                    userId: req.user.id,
-                    predictedDisease: result.primary_disease || "Unknown",
-                    confidenceScore: result.confidence || 0,
-                    symptomsProvided: symptoms
-                });
-
-                // Attach ID to result if needed (optional)
-                result.historyId = historyEntry._id;
-
-                res.status(200).json(result);
-
-            } catch (e) {
-                console.error("JSON Parse Error", e, dataString);
-                res.status(500).json({ message: 'Invalid response from model', details: dataString });
-            }
-        });
+        
+        result.historyId = historyEntry._id;
+        res.status(200).json(result);
 
     } catch (error) {
+        console.error(error);
         res.status(500).json({ message: error.message });
     }
 };
