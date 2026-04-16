@@ -89,6 +89,9 @@ class _HomeScreenState extends State<HomeScreen> {
             _buildSectionTitle("Your Activity"),
             SizedBox(height: 12),
             _buildActivityCard(context, lang),
+            SizedBox(height: 40),
+            _buildFooter(),
+            SizedBox(height: 20),
           ],
         ),
       ),
@@ -302,7 +305,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildActivityCard(BuildContext context, AppLocalizations lang) {
+   Widget _buildActivityCard(BuildContext context, AppLocalizations lang) {
      return Container(
        padding: EdgeInsets.all(16),
        decoration: BoxDecoration(
@@ -336,5 +339,44 @@ class _HomeScreenState extends State<HomeScreen> {
          ],
        ),
      );
+  }
+
+  Widget _buildFooter() {
+    return Column(
+      children: [
+        Divider(color: Colors.grey[300]),
+        SizedBox(height: 16),
+        Text(
+          "© 2026 Pravin Kakde. All Rights Reserved.",
+          style: TextStyle(color: Colors.grey[600], fontSize: 12, fontWeight: FontWeight.bold),
+        ),
+        SizedBox(height: 4),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            InkWell(
+              onTap: () {},
+              child: Text(
+                "Privacy Policy",
+                style: TextStyle(color: primaryColor, fontSize: 12, decoration: TextDecoration.underline),
+              ),
+            ),
+            SizedBox(width: 16),
+            InkWell(
+              onTap: () {},
+              child: Text(
+                "Terms of Service",
+                style: TextStyle(color: primaryColor, fontSize: 12, decoration: TextDecoration.underline),
+              ),
+            ),
+          ],
+        ),
+        SizedBox(height: 8),
+        Text(
+          "This app is not a replacement for professional medical advice.",
+          style: TextStyle(color: Colors.grey[500], fontSize: 10, fontStyle: FontStyle.italic),
+        ),
+      ],
+    );
   }
 }
