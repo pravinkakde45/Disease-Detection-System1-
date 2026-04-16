@@ -47,10 +47,11 @@ const predictDisease = async (req, res) => {
         const systemPrompt = `You are an expert medical diagnostician algorithm. 
 The patient has the following symptoms: ${symptoms.join(', ')}.
 Analyze these symptoms and determine the most likely primary disease. Provide a confidence score between 0 and 100 representing how certain you are of this diagnosis based strictly on the symptoms.
-Return ONLY a strictly valid JSON object matching this exact format:
+Return ONLY a strictly valid JSON object matching this exact format exactly (do not leave out any keys):
 {
   "primary_disease": "Name of Disease",
-  "confidence": 85
+  "confidence": 85,
+  "possible_diseases": ["Disease 2", "Disease 3"]
 }
 Do not include any other text, markdown formatting, or code blocks.`;
 
