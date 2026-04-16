@@ -1,0 +1,21 @@
+{
+    "app_title": "रोग भविष्यवाणी (Disease Prediction)",
+    "login_title": "स्वागत है",
+    "login_subtitle": "जारी रखने के लिए साइन इन करें",
+    "email_hint": "ईमेल पता",
+    "password_hint": "पासवर्ड",
+    "login_button": "लॉग इन करें",
+    "register_link": "खाता नहीं है? साइन अप करें",
+    "home_welcome": "नमस्ते",
+    "check_symptoms": "लक्षण जाँचें",
+    "find_specialist": "विशेषज्ञ खोजें",
+    "medical_chat": "मेडिकल चैटबॉट",
+    "health_history": "इतिहास और रिकॉर्ड",
+    "privacy_settings": "गोपनीयता और सेटिंग्स",
+    "change_language": "भाषा बदलें",
+    "logout": "लॉग आउट",
+    "chat_hint": "अपने स्वास्थ्य के बारे में पूछें...",
+    "scan_mri": "MRI/X-Ray स्कैन करें",
+    "common_diseases": "सामान्य रोग",
+    "emergency_call": "आपातकालीन कॉल"
+}

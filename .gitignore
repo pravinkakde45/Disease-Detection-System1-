@@ -1,0 +1,22 @@
+node_modules/
+.env
+venv/
+.idea/
+.vscode/
+
+# Ignore massive data files that github will block (> 100MB)
+*.csv
+build_log.txt
+
+# Flutter & Dart (Frontend)
+.dart_tool/
+build/
+*.DS_Store
+.flutter-plugins
+.flutter-plugins-dependencies
+.pub-cache/
+
+# Python (Backend)
+__pycache__/
+*.py[cod]
+*.pkl

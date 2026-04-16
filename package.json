@@ -1,0 +1,11 @@
+{
+  "name": "disease-detection-system-root",
+  "version": "1.0.0",
+  "description": "Root orchestrator for Disease Detection System",
+  "scripts": {
+    "start": "npm start --prefix server",
+    "dev": "npm run dev --prefix server",
+    "backend-install": "npm install --prefix server",
+    "frontend-run": "cd frontend && flutter run"
+  }
+}

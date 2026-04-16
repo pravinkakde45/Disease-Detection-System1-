@@ -1,0 +1,21 @@
+{
+    "app_title": "Disease Prediction",
+    "login_title": "Welcome Back",
+    "login_subtitle": "Sign in to continue",
+    "email_hint": "Email Address",
+    "password_hint": "Password",
+    "login_button": "LOGIN",
+    "register_link": "Don't have an account? Sign Up",
+    "home_welcome": "Hallo",
+    "check_symptoms": "Check Symptoms",
+    "find_specialist": "Find Specialist",
+    "medical_chat": "Medical Chatbot",
+    "health_history": "History & Records",
+    "privacy_settings": "Privacy & Settings",
+    "change_language": "Change Language",
+    "logout": "Logout",
+    "chat_hint": "Ask about your health...",
+    "scan_mri": "Scan MRI/X-Ray",
+    "common_diseases": "Common Diseases",
+    "emergency_call": "Emergency Call"
+}

@@ -1,0 +1,129 @@
+const Doctor = require('../models/Doctor');
+
+// Disease Metadata Map
+// Maps disease to: Specialist, Severity (low/mod/high), and Basic Care Tips
+const diseaseMetadata = {
+    // Critical / High Severity
+    'heart attack': { specialist: 'Cardiologist', severity: 'HIGH', care: [] },
+    'stroke': { specialist: 'Neurologist', severity: 'HIGH', care: [] },
+    'pneumonia': { specialist: 'Pulmonologist', severity: 'HIGH', care: [] },
+    'tuberculosis': { specialist: 'Pulmonologist', severity: 'HIGH', care: [] },
+    'paralysis': { specialist: 'Neurologist', severity: 'HIGH', care: [] },
+    'typhoid': { specialist: 'General Physician', severity: 'MODERATE', care: ['Stay hydrated', 'Rest completely', 'Avoid solid foods'] },
+    'malaria': { specialist: 'General Physician', severity: 'MODERATE', care: ['Use mosquito nets', 'Stay hydrated', 'Control fever with tepid sponging'] },
+    'dengue': { specialist: 'General Physician', severity: 'MODERATE', care: ['Drink plenty of fluids', 'Monitor platelet count', 'Take rest'] },
+    
+    // Low Severity / OTC allow
+    'common cold': { 
+        specialist: 'General Physician', 
+        severity: 'LOW', 
+        care: ['Steam inhalation', 'Warm salt water gargle', 'Drink warm fluids'],
+        medicines: ['Paracetamol (for fever)', 'Antihistamines (for runny nose)', 'Vitamin C']
+    },
+    'migraine': { 
+        specialist: 'Neurologist', 
+        severity: 'MODERATE', 
+        care: ['Rest in a dark room', 'Apply cold compress', 'Hydrate'],
+        medicines: ['Pain relievers (consult doctor first)']
+    },
+    'acne': { 
+        specialist: 'Dermatologist', 
+        severity: 'LOW', 
+        care: ['Keep face clean', 'Avoid touching face', 'Stay hydrated'],
+        medicines: ['Benzoyl Peroxide gel', 'Salicylic Acid face wash']
+    },
+    'fungal infection': { 
+        specialist: 'Dermatologist', 
+        severity: 'LOW', 
+        care: ['Keep area dry', 'Wear loose clothes', 'Maintain hygiene'],
+        medicines: ['Antifungal cream', 'Dusting powder']
+    },
+    'gerd': { 
+        specialist: 'Gastroenterologist', 
+        severity: 'LOW', 
+        care: ['Avoid spicy food', 'Eat smaller meals', 'Do not lie down immediately after eating'],
+        medicines: ['Antacids', 'Proton Pump Inhibitors (OTC)']
+    },
+    
+    // Default
+    'default': { specialist: 'General Physician', severity: 'MODERATE', care: ['Consult a doctor'] }
+};
+
+// @desc    Get Smart Recommendations (Doctors + Care)
+// @route   POST /api/recommendations/doctor
+// @access  Private (or Public if needed, using Private for now)
+const getRecommendations = async (req, res) => {
+    try {
+        const { disease, city } = req.body;
+        
+        const lowerDisease = (disease || '').toLowerCase();
+        let meta = diseaseMetadata['default'];
+
+        // 1. Find Metadata
+        for (const [key, value] of Object.entries(diseaseMetadata)) {
+            if (lowerDisease.includes(key)) {
+                meta = value;
+                break;
+            }
+        }
+
+        // 2. Doctor Finding Logic (Strict Location Rule)
+        // Rule: Show doctors ONLY from City first.
+        let doctors = [];
+        
+        if (city) {
+            // Priority 1: Exact City Match AND Specialist Match
+            doctors = await Doctor.find({ 
+                city: { $regex: city, $options: 'i' }, 
+                specialization: meta.specialist 
+            });
+
+            // Priority 2: Exact City Match BUT General Physician (if no specialist found)
+            if (doctors.length === 0) {
+                 doctors = await Doctor.find({ 
+                    city: { $regex: city, $options: 'i' }, 
+                    specialization: 'General Physician' 
+                });
+            }
+        }
+
+        // Fallback: If NO doctors in city, fetch from ANYWHERE (but warn user?)
+        // The prompt says "Do NOT show far-away doctors unless No doctors are available in that city"
+        if (doctors.length === 0) {
+            doctors = await Doctor.find({ specialization: meta.specialist }).limit(5);
+        }
+
+        // 3. Construct Response
+        const response = {
+            disease: disease,
+            specialization: meta.specialist,
+            severity: meta.severity,
+            doctors: doctors,
+            basicCare: [],
+            medicines: []
+        };
+
+        const medicineHelper = require('../utils/medicineHelper');
+        
+        // 4. Care & Medicine Logic
+        // We now fetch intelligent medicine suggestions solely from the dataset
+        medicineHelper.loadMedicines();
+        let fetchedMedicines = medicineHelper.getMedicinesForDisease(disease);
+
+        response.basicCare = meta.care || [];
+        response.medicines = fetchedMedicines; // ONLY use CSV returned medicines without hardcoded strings
+        
+        // Critical: Strict Disclaimer
+        response.disclaimer = "This is a basic medicine suggestion generated by the system. Please consult a qualified doctor before taking any medication.";
+
+        res.status(200).json(response);
+
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: error.message });
+    }
+};
+
+module.exports = {
+    getRecommendations
+};
